@@ -1,30 +1,32 @@
-name: CI Build APK
+name: Build APK
 
 on:
+  workflow_dispatch:
   push:
-    branches: [ main, master ]
+    branches: [ main ]
 
 jobs:
-  build:
+  build-apk:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v4
 
-    - name: Set up Python
-      uses: actions/setup-python@v5
-      with:
-        python-version: '3.10'
+      - name: Build APK with Flet
+        id: build
+        uses: flet-dev/flet-build-action@v1
+        with:
+          target: apk
+          # استخدم 3.12 لضمان الاستقرار، أو 3.14 إذا أردت
+          runner-python-version: "3.12"
+          bundled-python-version: "3.12"
+          build-number: ${{ github.run_number }}
 
-    - name: Build with Buildozer
-      uses: ArtemSBulgakov/buildozer-action@v1
-      with:
-        command: android debug
-        buildozer_version: master
-
-    - name: Upload APK artifact
-      uses: actions/upload-artifact@v4
-      with:
-        name: package
-        path: bin/*.apk
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: midad-apk
+          path: ${{ steps.build.outputs.archive-path }}
+          archive: false
+          if-no-files-found: error
